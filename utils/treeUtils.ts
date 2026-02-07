@@ -53,10 +53,17 @@ export function calculateTreeState(
 }
 
 export function calculateStreak(tasks: Task[]): number {
-  const completedTasks = tasks
-    .filter((t) => t.completed && t.completedAt)
-    .map((t) => parseISO(t.completedAt!))
-    .sort((a, b) => b.getTime() - a.getTime());
+  const completedTasks: Date[] = [];
+  for (const t of tasks) {
+    if (!t.completed || !t.completedAt) continue;
+    try {
+      const d = parseISO(t.completedAt);
+      if (!isNaN(d.getTime())) completedTasks.push(d);
+    } catch {
+      // neplatné datum – přeskočit
+    }
+  }
+  completedTasks.sort((a, b) => b.getTime() - a.getTime());
 
   if (completedTasks.length === 0) return 0;
 

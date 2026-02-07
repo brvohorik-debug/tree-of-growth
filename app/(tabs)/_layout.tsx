@@ -5,7 +5,7 @@ import { useStore } from '../../store/useStore';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const isDark = useStore((state) => state.settings.isDarkMode);
+  const isDark = useStore((state) => state.settings?.isDarkMode ?? false);
 
   const theme = isDark ? 'dark' : 'light';
   const backgroundColor = theme === 'dark' ? '#1a1a1a' : '#f5f5f5';

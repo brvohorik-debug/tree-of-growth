@@ -13,7 +13,6 @@ import { useStore } from '../../store/useStore';
 import { Task, TaskCategory, TaskPriority } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
-import { cs } from 'date-fns/locale';
 
 export default function TasksScreen() {
   const { tasks, addTask, updateTask, deleteTask, toggleTask, settings } = useStore();
@@ -63,10 +62,18 @@ export default function TasksScreen() {
   const handleSave = () => {
     if (!formData.title.trim()) return;
 
+    const payload = {
+      title: formData.title.trim(),
+      description: (formData.description || '').trim(),
+      category: formData.category,
+      priority: formData.priority,
+      dueDate: (formData.dueDate || '').trim() || undefined,
+    };
+
     if (editingTask) {
-      updateTask(editingTask.id, formData);
+      updateTask(editingTask.id, payload);
     } else {
-      addTask(formData);
+      addTask(payload);
     }
 
     setModalVisible(false);
@@ -168,7 +175,7 @@ export default function TasksScreen() {
                 if (isNaN(d.getTime())) return null;
                 return (
                   <Text style={[styles.dateText, { color: theme.secondary }]}>
-                    {format(d, 'd. MMM', { locale: cs })}
+                    {format(d, 'd. MMM')}
                   </Text>
                 );
               } catch {

@@ -63,7 +63,7 @@ export const useStore = create<AppState>((set, get) => ({
       tasks: [...state.tasks, newTask],
     }));
     
-    get().saveData();
+    get().saveData().catch(() => {});
   },
 
   updateTask: (id, updates) => {
@@ -73,7 +73,7 @@ export const useStore = create<AppState>((set, get) => ({
       ),
     }));
     
-    get().saveData();
+    get().saveData().catch(() => {});
   },
 
   deleteTask: (id) => {
@@ -81,7 +81,7 @@ export const useStore = create<AppState>((set, get) => ({
       tasks: state.tasks.filter((task) => task.id !== id),
     }));
     
-    get().saveData();
+    get().saveData().catch(() => {});
   },
 
   toggleTask: (id) => {
@@ -112,7 +112,7 @@ export const useStore = create<AppState>((set, get) => ({
       };
     });
 
-    get().saveData();
+    get().saveData().catch(() => {});
   },
 
   addImage: async (image) => {
@@ -141,7 +141,7 @@ export const useStore = create<AppState>((set, get) => ({
       userImages: [...state.userImages, newImage],
     }));
 
-    get().saveData();
+    get().saveData().catch(() => {});
   },
 
   deleteImage: async (id) => {
@@ -158,7 +158,7 @@ export const useStore = create<AppState>((set, get) => ({
       userImages: state.userImages.filter((img) => img.id !== id),
     }));
 
-    get().saveData();
+    get().saveData().catch(() => {});
   },
 
   updateSettings: (newSettings) => {
@@ -166,7 +166,7 @@ export const useStore = create<AppState>((set, get) => ({
       settings: { ...state.settings, ...newSettings },
     }));
     
-    get().saveData();
+    get().saveData().catch(() => {});
   },
 
   loadData: async () => {
