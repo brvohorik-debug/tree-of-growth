@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
-  Share,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useStore } from '../../store/useStore';
 import * as FileSystem from 'expo-file-system';
@@ -15,8 +16,11 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 
 export default function SettingsScreen() {
-  const { settings, updateSettings, exportData, importData } = useStore();
+  const { settings, updateSettings, exportData, importData, taskTemplates, addTemplate, deleteTemplate } = useStore();
   const [isExporting, setIsExporting] = useState(false);
+  const [templateModalVisible, setTemplateModalVisible] = useState(false);
+  const [newTemplateTitle, setNewTemplateTitle] = useState('');
+  const [newTemplateDesc, setNewTemplateDesc] = useState('');
 
   const isDark = settings.isDarkMode;
   const theme = {
@@ -85,6 +89,7 @@ export default function SettingsScreen() {
                 },
                 userImages: [],
                 settings: settings,
+                taskTemplates: [],
               }));
               Alert.alert('Úspěch', 'Všechna data byla smazána.');
             } catch (error) {
@@ -190,6 +195,72 @@ export default function SettingsScreen() {
       </View>
 
       <Text style={[styles.sectionTitle, { color: theme.text }]}>
+        Šablony úkolů
+      </Text>
+      <View style={[styles.settingCard, { backgroundColor: theme.card }]}>
+        <Text style={[styles.templateHint, { color: theme.secondary }]}>
+          Šablony se zobrazí při vytváření úkolu – klepnutím vyplníte název a popis.
+        </Text>
+        {(taskTemplates ?? []).map((tpl) => (
+          <View key={tpl.id} style={[styles.templateRow, { borderColor: theme.border }]}>
+            <View style={styles.templateRowContent}>
+              <Text style={[styles.templateRowTitle, { color: theme.text }]} numberOfLines={1}>{tpl.title}</Text>
+              {tpl.description ? <Text style={[styles.templateRowDesc, { color: theme.secondary }]} numberOfLines={1}>{tpl.description}</Text> : null}
+            </View>
+            <TouchableOpacity onPress={() => deleteTemplate(tpl.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Ionicons name="trash-outline" size={22} color="#FF6B35" />
+            </TouchableOpacity>
+          </View>
+        ))}
+        <TouchableOpacity
+          style={[styles.addTemplateButton, { backgroundColor: theme.background, borderColor: theme.border }]}
+          onPress={() => { setNewTemplateTitle(''); setNewTemplateDesc(''); setTemplateModalVisible(true); }}
+        >
+          <Ionicons name="add-circle-outline" size={24} color={theme.accent} />
+          <Text style={[styles.addTemplateText, { color: theme.accent }]}>Přidat šablonu</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Modal visible={templateModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Nová šablona úkolu</Text>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+              placeholder="Název šablony"
+              placeholderTextColor={theme.secondary}
+              value={newTemplateTitle}
+              onChangeText={setNewTemplateTitle}
+            />
+            <TextInput
+              style={[styles.modalInput, styles.modalTextArea, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+              placeholder="Popis (volitelné)"
+              placeholderTextColor={theme.secondary}
+              value={newTemplateDesc}
+              onChangeText={setNewTemplateDesc}
+              multiline
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: theme.border }]} onPress={() => setTemplateModalVisible(false)}>
+                <Text style={[styles.modalButtonTextDark, { color: theme.text }]}>Zrušit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: theme.accent }]}
+                onPress={() => {
+                  if (newTemplateTitle.trim()) {
+                    addTemplate({ title: newTemplateTitle.trim(), description: newTemplateDesc.trim() || undefined });
+                    setTemplateModalVisible(false);
+                  }
+                }}
+              >
+                <Text style={styles.modalButtonText}>Přidat</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>
         Správa dat
       </Text>
 
@@ -290,6 +361,47 @@ const styles = StyleSheet.create({
     height: 1,
     marginLeft: 52,
   },
+  templateHint: { fontSize: 13, padding: 12 },
+  templateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+  },
+  templateRowContent: { flex: 1 },
+  templateRowTitle: { fontSize: 15, fontWeight: '500' },
+  templateRowDesc: { fontSize: 12, marginTop: 2 },
+  addTemplateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    margin: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 8,
+  },
+  addTemplateText: { fontSize: 16 },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 24,
+  },
+  modalContent: { borderRadius: 12, padding: 20 },
+  modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 16 },
+  modalInput: {
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 12,
+    fontSize: 16,
+  },
+  modalTextArea: { minHeight: 60 },
+  modalButtons: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  modalButton: { flex: 1, padding: 14, borderRadius: 8, alignItems: 'center' },
+  modalButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  modalButtonTextDark: { fontSize: 16, fontWeight: '600' },
   footer: {
     alignItems: 'center',
     marginTop: 40,

@@ -40,3 +40,9 @@ export interface Settings {
   selectedTheme?: string;
   selectedBackground?: string;
 }
+
+export interface TaskTemplate {
+  id: string;
+  title: string;
+  description?: string;
+}

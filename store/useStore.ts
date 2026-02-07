@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
-import { Task, TreeState, UserImage, Settings } from '../types';
+import { Task, TreeState, UserImage, Settings, TaskTemplate } from '../types';
 import { calculateTreeState, calculateStreak } from '../utils/treeUtils';
 
 interface AppState {
@@ -9,12 +9,14 @@ interface AppState {
   treeState: TreeState;
   userImages: UserImage[];
   settings: Settings;
-  
-  // Actions
+  taskTemplates: TaskTemplate[];
+
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completed'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   toggleTask: (id: string) => void;
+  addTemplate: (template: Omit<TaskTemplate, 'id'>) => void;
+  deleteTemplate: (id: string) => void;
   addImage: (image: UserImage) => Promise<void>;
   deleteImage: (id: string) => Promise<void>;
   updateSettings: (settings: Partial<Settings>) => void;
@@ -29,6 +31,7 @@ const STORAGE_KEYS = {
   TREE_STATE: '@tree_of_growth:tree_state',
   USER_IMAGES: '@tree_of_growth:user_images',
   SETTINGS: '@tree_of_growth:settings',
+  TASK_TEMPLATES: '@tree_of_growth:task_templates',
 };
 
 const initialTreeState: TreeState = {
@@ -50,6 +53,7 @@ export const useStore = create<AppState>((set, get) => ({
   treeState: initialTreeState,
   userImages: [],
   settings: initialSettings,
+  taskTemplates: [],
 
   addTask: (taskData) => {
     const newTask: Task = {
@@ -115,6 +119,22 @@ export const useStore = create<AppState>((set, get) => ({
     get().saveData().catch(() => {});
   },
 
+  addTemplate: (templateData) => {
+    const newTemplate: TaskTemplate = {
+      ...templateData,
+      id: Date.now().toString(),
+    };
+    set((state) => ({ taskTemplates: [...state.taskTemplates, newTemplate] }));
+    get().saveData().catch(() => {});
+  },
+
+  deleteTemplate: (id) => {
+    set((state) => ({
+      taskTemplates: state.taskTemplates.filter((t) => t.id !== id),
+    }));
+    get().saveData().catch(() => {});
+  },
+
   addImage: async (image) => {
     // Copy image to user_assets directory
     const userAssetsDir = `${FileSystem.documentDirectory}user_assets/`;
@@ -171,12 +191,13 @@ export const useStore = create<AppState>((set, get) => ({
 
   loadData: async () => {
     try {
-      const [tasksJson, treeStateJson, userImagesJson, settingsJson] =
+      const [tasksJson, treeStateJson, userImagesJson, settingsJson, templatesJson] =
         await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.TASKS),
           AsyncStorage.getItem(STORAGE_KEYS.TREE_STATE),
           AsyncStorage.getItem(STORAGE_KEYS.USER_IMAGES),
           AsyncStorage.getItem(STORAGE_KEYS.SETTINGS),
+          AsyncStorage.getItem(STORAGE_KEYS.TASK_TEMPLATES),
         ]);
 
       const tasks: Task[] = tasksJson ? JSON.parse(tasksJson) : [];
@@ -189,8 +210,10 @@ export const useStore = create<AppState>((set, get) => ({
       const settings: Settings = settingsJson
         ? JSON.parse(settingsJson)
         : initialSettings;
+      const taskTemplates: TaskTemplate[] = templatesJson
+        ? JSON.parse(templatesJson)
+        : [];
 
-      // Recalculate tree state from tasks
       const recalculatedTreeState = calculateTreeState(tasks, treeState);
 
       set({
@@ -198,6 +221,7 @@ export const useStore = create<AppState>((set, get) => ({
         treeState: recalculatedTreeState,
         userImages,
         settings,
+        taskTemplates,
       });
     } catch (error) {
       console.error('Error loading data:', error);
@@ -206,13 +230,14 @@ export const useStore = create<AppState>((set, get) => ({
 
   saveData: async () => {
     try {
-      const { tasks, treeState, userImages, settings } = get();
+      const { tasks, treeState, userImages, settings, taskTemplates } = get();
       
       await Promise.all([
         AsyncStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks)),
         AsyncStorage.setItem(STORAGE_KEYS.TREE_STATE, JSON.stringify(treeState)),
         AsyncStorage.setItem(STORAGE_KEYS.USER_IMAGES, JSON.stringify(userImages)),
         AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings)),
+        AsyncStorage.setItem(STORAGE_KEYS.TASK_TEMPLATES, JSON.stringify(taskTemplates)),
       ]);
     } catch (error) {
       console.error('Error saving data:', error);
@@ -220,8 +245,8 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   exportData: async () => {
-    const { tasks, treeState, userImages, settings } = get();
-    return JSON.stringify({ tasks, treeState, userImages, settings }, null, 2);
+    const { tasks, treeState, userImages, settings, taskTemplates } = get();
+    return JSON.stringify({ tasks, treeState, userImages, settings, taskTemplates }, null, 2);
   },
 
   importData: async (data: string) => {
@@ -232,6 +257,7 @@ export const useStore = create<AppState>((set, get) => ({
         treeState: imported.treeState || initialTreeState,
         userImages: imported.userImages || [],
         settings: { ...initialSettings, ...imported.settings },
+        taskTemplates: imported.taskTemplates || [],
       });
       await get().saveData();
     } catch (error) {

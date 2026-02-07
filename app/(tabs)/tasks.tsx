@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,115 @@ import {
 import { useStore } from '../../store/useStore';
 import { Task, TaskCategory, TaskPriority } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
+
+const DAYS_CZ = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
+const MONTHS_CZ = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'];
+
+function InlineCalendar({
+  value,
+  onChange,
+  theme,
+}: {
+  value: string;
+  onChange: (dateStr: string) => void;
+  theme: { background: string; text: string; accent: string; border: string };
+}) {
+  const today = new Date();
+  const [viewDate, setViewDate] = useState(() => {
+    if (value) {
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? new Date() : d;
+    }
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
+
+  useEffect(() => {
+    if (value) {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) {
+        setViewDate(new Date(d.getFullYear(), d.getMonth(), 1));
+      }
+    }
+  }, [value]);
+
+  const { year, month, days } = useMemo(() => {
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
+    const first = new Date(y, m, 1);
+    const last = new Date(y, m + 1, 0);
+    const firstDay = (first.getDay() + 6) % 7;
+    const dayCount = last.getDate();
+    const days: (number | null)[] = [];
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let i = 1; i <= dayCount; i++) days.push(i);
+    return { year: y, month: m, days };
+  }, [viewDate]);
+
+  const selectedDate = value ? new Date(value) : null;
+  const isSelected = (day: number) =>
+    selectedDate &&
+    selectedDate.getDate() === day &&
+    selectedDate.getMonth() === month &&
+    selectedDate.getFullYear() === year;
+  const isToday = (day: number) =>
+    today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+
+  const pick = (day: number) => {
+    const d = new Date(year, month, day);
+    onChange(d.toISOString().split('T')[0]);
+  };
+
+  const prevMonth = () => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1));
+  const nextMonth = () => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1));
+
+  return (
+    <View style={[styles.calendarWrap, { backgroundColor: theme.background, borderColor: theme.border }]}>
+      <View style={styles.calendarHeader}>
+        <TouchableOpacity onPress={prevMonth} style={styles.calendarNav}>
+          <Ionicons name="chevron-back" size={24} color={theme.text} />
+        </TouchableOpacity>
+        <Text style={[styles.calendarTitle, { color: theme.text }]}>
+          {MONTHS_CZ[month]} {year}
+        </Text>
+        <TouchableOpacity onPress={nextMonth} style={styles.calendarNav}>
+          <Ionicons name="chevron-forward" size={24} color={theme.text} />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.calendarWeekdays}>
+        {DAYS_CZ.map((d) => (
+          <Text key={d} style={[styles.calendarWeekday, { color: theme.text }]}>{d}</Text>
+        ))}
+      </View>
+      <View style={styles.calendarGrid}>
+        {days.map((day, i) =>
+          day === null ? (
+            <View key={`e-${i}`} style={styles.calendarDay} />
+          ) : (
+            <TouchableOpacity
+              key={day}
+              style={[
+                styles.calendarDay,
+                isSelected(day) && { backgroundColor: theme.accent },
+                isToday(day) && !isSelected(day) && { borderWidth: 2, borderColor: theme.accent },
+              ]}
+              onPress={() => pick(day)}
+            >
+              <Text
+                style={[
+                  styles.calendarDayText,
+                  { color: theme.text },
+                  isSelected(day) && { color: '#fff' },
+                ]}
+              >
+                {day}
+              </Text>
+            </TouchableOpacity>
+          )
+        )}
+      </View>
+    </View>
+  );
+}
 
 class TasksErrorBoundary extends Component<
   { children: React.ReactNode },
@@ -55,6 +164,7 @@ export default function TasksScreen() {
   const deleteTask = useStore((s) => s.deleteTask);
   const toggleTask = useStore((s) => s.toggleTask);
   const settings = useStore((s) => s.settings);
+  const taskTemplates = useStore((s) => s.taskTemplates ?? []);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [formData, setFormData] = useState({
@@ -63,6 +173,7 @@ export default function TasksScreen() {
     category: 'daily' as TaskCategory,
     priority: 'medium' as TaskPriority,
     dueDate: '',
+    repeatPattern: undefined as 'daily' | 'weekly' | 'monthly' | undefined,
   });
 
   const isDark = settings?.isDarkMode ?? false;
@@ -84,6 +195,7 @@ export default function TasksScreen() {
         category: task.category,
         priority: task.priority,
         dueDate: task.dueDate || '',
+        repeatPattern: task.repeatPattern,
       });
     } else {
       setEditingTask(null);
@@ -93,9 +205,18 @@ export default function TasksScreen() {
         category: 'daily',
         priority: 'medium',
         dueDate: '',
+        repeatPattern: undefined,
       });
     }
     setModalVisible(true);
+  };
+
+  const applyTemplate = (title: string, description?: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      title,
+      description: description || prev.description,
+    }));
   };
 
   const handleSave = () => {
@@ -107,6 +228,7 @@ export default function TasksScreen() {
       category: formData.category,
       priority: formData.priority,
       dueDate: (formData.dueDate || '').trim() || undefined,
+      repeatPattern: formData.repeatPattern,
     };
 
     if (editingTask) {
@@ -213,6 +335,14 @@ export default function TasksScreen() {
                 {formatTaskDate(item.dueDate)}
               </Text>
             ) : null}
+            {item.repeatPattern && (
+              <View style={styles.taskBadge}>
+                <Ionicons name="repeat" size={14} color={theme.accent} />
+                <Text style={[styles.badgeText, { color: theme.accent }]}>
+                  {item.repeatPattern === 'daily' ? 'Denně' : item.repeatPattern === 'weekly' ? 'Týdně' : 'Měsíčně'}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
         <TouchableOpacity
@@ -268,6 +398,22 @@ export default function TasksScreen() {
             </View>
 
             <ScrollView style={styles.modalBody}>
+              {taskTemplates.length > 0 && !editingTask && (
+                <>
+                  <Text style={[styles.label, { color: theme.text }]}>Rychlý výběr šablony</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templatesRow}>
+                    {taskTemplates.map((tpl) => (
+                      <TouchableOpacity
+                        key={tpl.id}
+                        style={[styles.templateChip, { backgroundColor: theme.background, borderColor: theme.border }]}
+                        onPress={() => applyTemplate(tpl.title, tpl.description)}
+                      >
+                        <Text style={[styles.templateChipText, { color: theme.text }]} numberOfLines={1}>{tpl.title}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
               <TextInput
                 style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
                 placeholder="Název úkolu"
@@ -363,13 +509,52 @@ export default function TasksScreen() {
                 })}
               </View>
 
-              <TextInput
-                style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
-                placeholder="Datum splnění (RRRR-MM-DD) – volitelné"
-                placeholderTextColor={theme.secondary}
+              <Text style={[styles.label, { color: theme.text }]}>Datum splnění</Text>
+              <InlineCalendar
                 value={formData.dueDate}
-                onChangeText={(text) => setFormData({ ...formData, dueDate: text })}
+                onChange={(dateStr) => setFormData({ ...formData, dueDate: dateStr })}
+                theme={theme}
               />
+              {formData.dueDate ? (
+                <TouchableOpacity
+                  style={[styles.clearDateButton, { borderColor: theme.border }]}
+                  onPress={() => setFormData({ ...formData, dueDate: '' })}
+                >
+                  <Ionicons name="close-circle" size={18} color={theme.secondary} />
+                  <Text style={[styles.clearDateText, { color: theme.secondary }]}>Zrušit výběr data</Text>
+                </TouchableOpacity>
+              ) : null}
+
+              <Text style={[styles.label, { color: theme.text }]}>Opakování</Text>
+              <View style={styles.optionsRow}>
+                {[
+                  { val: undefined as const, label: 'Žádné' },
+                  { val: 'daily' as const, label: 'Denně' },
+                  { val: 'weekly' as const, label: 'Týdně' },
+                  { val: 'monthly' as const, label: 'Měsíčně' },
+                ].map(({ val, label }) => (
+                  <TouchableOpacity
+                    key={label}
+                    style={[
+                      styles.optionButton,
+                      {
+                        backgroundColor: formData.repeatPattern === val ? theme.accent : theme.background,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                    onPress={() => setFormData({ ...formData, repeatPattern: val })}
+                  >
+                    <Text
+                      style={[
+                        styles.optionText,
+                        { color: formData.repeatPattern === val ? '#fff' : theme.text },
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </ScrollView>
 
             <View style={styles.modalFooter}>
@@ -416,6 +601,61 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  calendarWrap: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 12,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  calendarNav: { padding: 4 },
+  calendarTitle: { fontSize: 16, fontWeight: '600' },
+  calendarWeekdays: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  calendarWeekday: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  calendarDay: {
+    width: '14.28%',
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  calendarDayText: { fontSize: 14, fontWeight: '500' },
+  clearDateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+    gap: 6,
+  },
+  clearDateText: { fontSize: 14 },
+  templatesRow: { marginBottom: 12 },
+  templateChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  templateChipText: { fontSize: 14 },
   listContent: {
     padding: 16,
     paddingBottom: 100,
