@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { useStore } from '@/store/useStore';
-import Tree from '@/components/Tree';
-import { getMotivationalMessage } from '@/utils/treeUtils';
+import { useStore } from '../../store/useStore';
+import Tree from '../../components/Tree';
+import { getMotivationalMessage } from '../../utils/treeUtils';
 import { isToday, parseISO } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -49,9 +49,9 @@ export default function TreeScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>Tree of Growth</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Strom růstu</Text>
         <Text style={[styles.subtitle, { color: theme.secondary }]}>
-          Level {treeState.level}
+          Úroveň {treeState.level}
         </Text>
       </View>
 
@@ -68,7 +68,7 @@ export default function TreeScreen() {
             {treeState.leaves}
           </Text>
           <Text style={[styles.statLabel, { color: theme.secondary }]}>
-            Leaves
+            Listy
           </Text>
         </View>
 
@@ -78,7 +78,7 @@ export default function TreeScreen() {
             {treeState.streak}
           </Text>
           <Text style={[styles.statLabel, { color: theme.secondary }]}>
-            Day Streak
+            Série dní
           </Text>
         </View>
 
@@ -88,7 +88,7 @@ export default function TreeScreen() {
             {treeState.growthPoints}
           </Text>
           <Text style={[styles.statLabel, { color: theme.secondary }]}>
-            Growth Points
+            Body růstu
           </Text>
         </View>
       </View>
@@ -103,13 +103,10 @@ export default function TreeScreen() {
       {/* Stage Info */}
       <View style={[styles.stageCard, { backgroundColor: theme.card }]}>
         <Text style={[styles.stageTitle, { color: theme.text }]}>
-          Current Stage
+          Aktuální fáze
         </Text>
         <Text style={[styles.stageValue, { color: theme.accent }]}>
-          {treeState.currentStage
-            .split('-')
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ')}
+          {treeState.currentStage === 'seed' ? 'Semeno' : treeState.currentStage === 'sprout' ? 'Klíček' : treeState.currentStage === 'small-tree' ? 'Malý strom' : treeState.currentStage === 'big-tree' ? 'Velký strom' : 'Kvetoucí strom'}
         </Text>
         <View style={styles.progressBar}>
           <View
@@ -123,7 +120,7 @@ export default function TreeScreen() {
           />
         </View>
         <Text style={[styles.progressText, { color: theme.secondary }]}>
-          {treeState.level % 10} / 10 to next level
+          {treeState.level % 10} / 10 do další úrovně
         </Text>
       </View>
     </ScrollView>

@@ -9,10 +9,11 @@ import {
   Modal,
   ScrollView,
 } from 'react-native';
-import { useStore } from '@/store/useStore';
-import { Task, TaskCategory, TaskPriority } from '@/types';
+import { useStore } from '../../store/useStore';
+import { Task, TaskCategory, TaskPriority } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
+import { cs } from 'date-fns/locale';
 
 export default function TasksScreen() {
   const { tasks, addTask, updateTask, deleteTask, toggleTask, settings } = useStore();
@@ -26,7 +27,7 @@ export default function TasksScreen() {
     dueDate: '',
   });
 
-  const isDark = settings.isDarkMode;
+  const isDark = settings?.isDarkMode ?? false;
   const theme = {
     background: isDark ? '#1a1a1a' : '#f5f5f5',
     text: isDark ? '#ffffff' : '#000000',
@@ -80,6 +81,8 @@ export default function TasksScreen() {
         return '#FFD700';
       case 'low':
         return '#4a7c2a';
+      default:
+        return '#4a7c2a';
     }
   };
 
@@ -91,6 +94,8 @@ export default function TasksScreen() {
         return 'flag';
       case 'habit':
         return 'repeat';
+      default:
+        return 'list';
     }
   };
 
@@ -133,7 +138,7 @@ export default function TasksScreen() {
                 color={theme.accent}
               />
               <Text style={[styles.badgeText, { color: theme.accent }]}>
-                {item.category}
+                {({ daily: 'Denní', 'long-term': 'Dlouhodobý', habit: 'Návyk' } as Record<TaskCategory, string>)[item.category] ?? item.category}
               </Text>
             </View>
             <View
@@ -154,14 +159,22 @@ export default function TasksScreen() {
                   { color: getPriorityColor(item.priority) },
                 ]}
               >
-                {item.priority}
+                {({ low: 'Nízká', medium: 'Střední', high: 'Vysoká' } as Record<TaskPriority, string>)[item.priority] ?? item.priority}
               </Text>
             </View>
-            {item.dueDate && (
-              <Text style={[styles.dateText, { color: theme.secondary }]}>
-                {format(new Date(item.dueDate), 'MMM d')}
-              </Text>
-            )}
+            {item.dueDate && (() => {
+              try {
+                const d = new Date(item.dueDate);
+                if (isNaN(d.getTime())) return null;
+                return (
+                  <Text style={[styles.dateText, { color: theme.secondary }]}>
+                    {format(d, 'd. MMM', { locale: cs })}
+                  </Text>
+                );
+              } catch {
+                return null;
+              }
+            })()}
           </View>
         </View>
         <TouchableOpacity
@@ -177,7 +190,7 @@ export default function TasksScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
-        data={tasks}
+        data={tasks ?? []}
         renderItem={renderTask}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
@@ -185,7 +198,7 @@ export default function TasksScreen() {
           <View style={styles.emptyContainer}>
             <Ionicons name="leaf-outline" size={64} color={theme.secondary} />
             <Text style={[styles.emptyText, { color: theme.secondary }]}>
-              No tasks yet. Add one to start growing your tree!
+              Zatím žádné úkoly. Přidej první a začni pěstovat svůj strom!
             </Text>
           </View>
         }
@@ -208,7 +221,7 @@ export default function TasksScreen() {
           <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.text }]}>
-                {editingTask ? 'Edit Task' : 'New Task'}
+                {editingTask ? 'Upravit úkol' : 'Nový úkol'}
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Ionicons name="close" size={24} color={theme.text} />
@@ -218,7 +231,7 @@ export default function TasksScreen() {
             <ScrollView style={styles.modalBody}>
               <TextInput
                 style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
-                placeholder="Task title"
+                placeholder="Název úkolu"
                 placeholderTextColor={theme.secondary}
                 value={formData.title}
                 onChangeText={(text) => setFormData({ ...formData, title: text })}
@@ -230,7 +243,7 @@ export default function TasksScreen() {
                   styles.textArea,
                   { backgroundColor: theme.background, color: theme.text, borderColor: theme.border },
                 ]}
-                placeholder="Description (optional)"
+                placeholder="Popis (volitelné)"
                 placeholderTextColor={theme.secondary}
                 value={formData.description}
                 onChangeText={(text) =>
@@ -240,10 +253,12 @@ export default function TasksScreen() {
                 numberOfLines={3}
               />
 
-              <Text style={[styles.label, { color: theme.text }]}>Category</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Kategorie</Text>
               <View style={styles.optionsRow}>
                 {(['daily', 'long-term', 'habit'] as TaskCategory[]).map(
-                  (cat) => (
+                  (cat) => {
+                    const catLabels: Record<TaskCategory, string> = { daily: 'Denní', 'long-term': 'Dlouhodobý', habit: 'Návyk' };
+                    return (
                     <TouchableOpacity
                       key={cat}
                       style={[
@@ -267,16 +282,19 @@ export default function TasksScreen() {
                           },
                         ]}
                       >
-                        {cat}
+                        {catLabels[cat]}
                       </Text>
                     </TouchableOpacity>
-                  )
+                  );
+                  }
                 )}
               </View>
 
-              <Text style={[styles.label, { color: theme.text }]}>Priority</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Priorita</Text>
               <View style={styles.optionsRow}>
-                {(['low', 'medium', 'high'] as TaskPriority[]).map((pri) => (
+                {(['low', 'medium', 'high'] as TaskPriority[]).map((pri) => {
+                  const priLabels: Record<TaskPriority, string> = { low: 'Nízká', medium: 'Střední', high: 'Vysoká' };
+                  return (
                   <TouchableOpacity
                     key={pri}
                     style={[
@@ -299,15 +317,16 @@ export default function TasksScreen() {
                         },
                       ]}
                     >
-                      {pri}
+                      {priLabels[pri]}
                     </Text>
                   </TouchableOpacity>
-                ))}
+                );
+                })}
               </View>
 
               <TextInput
                 style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
-                placeholder="Due date (YYYY-MM-DD) - optional"
+                placeholder="Datum splnění (RRRR-MM-DD) – volitelné"
                 placeholderTextColor={theme.secondary}
                 value={formData.dueDate}
                 onChangeText={(text) => setFormData({ ...formData, dueDate: text })}
@@ -319,7 +338,7 @@ export default function TasksScreen() {
                 style={[styles.saveButton, { backgroundColor: theme.accent }]}
                 onPress={handleSave}
               >
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>Uložit</Text>
               </TouchableOpacity>
             </View>
           </View>

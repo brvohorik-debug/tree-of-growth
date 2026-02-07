@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
-import { Task, TreeState, UserImage, Settings } from '@/types';
-import { calculateTreeState, calculateStreak } from '@/utils/treeUtils';
+import { Task, TreeState, UserImage, Settings } from '../types';
+import { calculateTreeState, calculateStreak } from '../utils/treeUtils';
 
 interface AppState {
   tasks: Task[];

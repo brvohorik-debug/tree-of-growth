@@ -6,9 +6,10 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
-import { useStore } from '@/store/useStore';
-import { Task } from '@/types';
+import { useStore } from '../../store/useStore';
+import { Task } from '../../types';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
+import { cs } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function CalendarScreen() {
@@ -111,7 +112,7 @@ export default function CalendarScreen() {
           <Ionicons name="chevron-back" size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={[styles.monthTitle, { color: theme.text }]}>
-          {format(currentMonth, 'MMMM yyyy')}
+          {format(currentMonth, 'LLLL yyyy', { locale: cs })}
         </Text>
         <TouchableOpacity onPress={() => navigateMonth('next')}>
           <Ionicons name="chevron-forward" size={24} color={theme.text} />
@@ -120,7 +121,7 @@ export default function CalendarScreen() {
 
       {/* Weekday Labels */}
       <View style={styles.weekdayRow}>
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+        {['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'].map((day) => (
           <View key={day} style={styles.weekdayCell}>
             <Text style={[styles.weekdayText, { color: theme.secondary }]}>
               {day}
@@ -140,11 +141,11 @@ export default function CalendarScreen() {
       {selectedDate && (
         <View style={[styles.tasksContainer, { backgroundColor: theme.card }]}>
           <Text style={[styles.tasksTitle, { color: theme.text }]}>
-            Tasks for {format(selectedDate, 'MMMM d, yyyy')}
+            Úkoly na {format(selectedDate, 'd. MMMM yyyy', { locale: cs })}
           </Text>
           {selectedTasks.length === 0 ? (
             <Text style={[styles.noTasksText, { color: theme.secondary }]}>
-              No tasks for this day
+              V tento den žádné úkoly
             </Text>
           ) : (
             <FlatList

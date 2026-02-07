@@ -5,11 +5,12 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  withDelay,
   interpolate,
   Easing,
 } from 'react-native-reanimated';
-import { TreeState } from '@/types';
-import { useStore } from '@/store/useStore';
+import { TreeState } from '../types';
+import { useStore } from '../store/useStore';
 
 const { width, height } = Dimensions.get('window');
 
@@ -39,7 +40,7 @@ export default function Tree({ treeState }: TreeProps) {
     });
 
     opacity.value = withTiming(1, { duration: 500 });
-    leavesOpacity.value = withTiming(1, { duration: 800, delay: 300 });
+    leavesOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
   }, [currentStage]);
 
   const treeStyle = useAnimatedStyle(() => ({

@@ -9,7 +9,7 @@ import {
   Alert,
   Share,
 } from 'react-native';
-import { useStore } from '@/store/useStore';
+import { useStore } from '../../store/useStore';
 import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
@@ -39,14 +39,14 @@ export default function SettingsScreen() {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri, {
           mimeType: 'application/json',
-          dialogTitle: 'Export Tree of Growth Data',
+          dialogTitle: 'Export dat Stromu růstu',
         });
-        Alert.alert('Success', 'Data exported successfully!');
+        Alert.alert('Úspěch', 'Data byla úspěšně exportována.');
       } else {
-        Alert.alert('Export', `Data saved to: ${fileUri}`);
+        Alert.alert('Export', `Data uložena do: ${fileUri}`);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to export data.');
+      Alert.alert('Chyba', 'Export dat se nezdařil.');
       console.error(error);
     } finally {
       setIsExporting(false);
@@ -55,20 +55,20 @@ export default function SettingsScreen() {
 
   const handleImport = () => {
     Alert.alert(
-      'Import Data',
-      'To import data, place a backup file in your device storage and use a file manager to open it with Tree of Growth.',
+      'Import dat',
+      'Pro import uložte záložní soubor do úložiště zařízení a otevřete ho pomocí správce souborů ve Stromu růstu.',
       [{ text: 'OK' }]
     );
   };
 
   const handleReset = () => {
     Alert.alert(
-      'Reset All Data',
-      'This will delete all tasks, images, and settings. This cannot be undone.',
+      'Smazat všechna data',
+      'Tím se smažou všechny úkoly, obrázky a nastavení. Tuto akci nelze vrátit zpět.',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Zrušit', style: 'cancel' },
         {
-          text: 'Reset',
+          text: 'Smazat',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -86,9 +86,9 @@ export default function SettingsScreen() {
                 userImages: [],
                 settings: settings,
               }));
-              Alert.alert('Success', 'All data has been reset.');
+              Alert.alert('Úspěch', 'Všechna data byla smazána.');
             } catch (error) {
-              Alert.alert('Error', 'Failed to reset data.');
+              Alert.alert('Chyba', 'Nepodařilo se smazat data.');
             }
           },
         },
@@ -137,7 +137,7 @@ export default function SettingsScreen() {
       contentContainerStyle={styles.content}
     >
       <Text style={[styles.sectionTitle, { color: theme.text }]}>
-        Appearance
+        Vzhled
       </Text>
 
       <View style={[styles.settingCard, { backgroundColor: theme.card }]}>
@@ -146,7 +146,7 @@ export default function SettingsScreen() {
             <Ionicons name="moon" size={24} color={theme.accent} />
             <View style={styles.settingText}>
               <Text style={[styles.settingLabel, { color: theme.text }]}>
-                Dark Mode
+                Tmavý režim
               </Text>
             </View>
           </View>
@@ -160,7 +160,7 @@ export default function SettingsScreen() {
       </View>
 
       <Text style={[styles.sectionTitle, { color: theme.text }]}>
-        Notifications
+        Oznámení
       </Text>
 
       <View style={[styles.settingCard, { backgroundColor: theme.card }]}>
@@ -169,10 +169,10 @@ export default function SettingsScreen() {
             <Ionicons name="notifications" size={24} color={theme.accent} />
             <View style={styles.settingText}>
               <Text style={[styles.settingLabel, { color: theme.text }]}>
-                Daily Reminders
+                Denní připomínky
               </Text>
               <Text style={[styles.settingValue, { color: theme.secondary }]}>
-                Get reminded to care for your tree
+                Připomínka péče o strom
               </Text>
             </View>
           </View>
@@ -190,39 +190,39 @@ export default function SettingsScreen() {
       </View>
 
       <Text style={[styles.sectionTitle, { color: theme.text }]}>
-        Data Management
+        Správa dat
       </Text>
 
       <View style={[styles.settingCard, { backgroundColor: theme.card }]}>
         <SettingItem
-          label="Export Data"
-          value="Backup your tasks and progress"
+          label="Exportovat data"
+          value="Záloha úkolů a pokroku"
           icon="download"
           onPress={handleExport}
         />
         <View style={[styles.divider, { backgroundColor: theme.border }]} />
         <SettingItem
-          label="Import Data"
-          value="Restore from backup"
+          label="Importovat data"
+          value="Obnovit ze zálohy"
           icon="cloud-upload"
           onPress={handleImport}
         />
       </View>
 
       <Text style={[styles.sectionTitle, { color: theme.text }]}>
-        About
+        O aplikaci
       </Text>
 
       <View style={[styles.settingCard, { backgroundColor: theme.card }]}>
         <SettingItem
-          label="Version"
+          label="Verze"
           value="1.0.0"
           icon="information-circle"
         />
         <View style={[styles.divider, { backgroundColor: theme.border }]} />
         <SettingItem
-          label="Reset All Data"
-          value="Delete everything"
+          label="Smazat všechna data"
+          value="Smaže vše"
           icon="trash"
           onPress={handleReset}
         />
@@ -230,10 +230,10 @@ export default function SettingsScreen() {
 
       <View style={styles.footer}>
         <Text style={[styles.footerText, { color: theme.secondary }]}>
-          Tree of Growth
+          Strom růstu
         </Text>
         <Text style={[styles.footerText, { color: theme.secondary }]}>
-          Grow your tree, grow yourself 🌱
+          Pěstuj strom, pěstuj se 🌱
         </Text>
       </View>
     </ScrollView>

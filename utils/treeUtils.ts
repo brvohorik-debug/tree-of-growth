@@ -1,4 +1,4 @@
-import { Task, TreeState } from '@/types';
+import { Task, TreeState } from '../types';
 import { differenceInDays, isToday, parseISO } from 'date-fns';
 
 export function calculateTreeState(
@@ -95,32 +95,32 @@ export function getMotivationalMessage(
   const { streak, level, currentStage } = treeState;
 
   if (streak === 0 && !hasTasksToday) {
-    return "🌱 Plant the seed of your growth today!";
+    return "🌱 Zasaď dnes semínko svého růstu!";
   }
 
   if (streak >= 7) {
-    return `🔥 Amazing ${streak}-day streak! Keep it growing!`;
+    return `🔥 Skvělá ${streak}denní série! Pokračuj!`;
   }
 
   if (streak >= 3) {
-    return `✨ Great ${streak}-day streak! Your tree is thriving!`;
+    return `✨ Výborná ${streak}denní série! Tvůj strom vzkvétá!`;
   }
 
   if (level >= 20) {
-    return "🌸 Your tree is blooming beautifully!";
+    return "🌸 Tvůj strom krásně kvete!";
   }
 
   if (level >= 15) {
-    return "🌳 Your tree has grown so strong!";
+    return "🌳 Tvůj strom vyrostl tak silný!";
   }
 
   if (level >= 10) {
-    return "🌿 Your tree is growing well!";
+    return "🌿 Tvůj strom se má čile k světu!";
   }
 
   if (hasTasksToday) {
-    return "💚 Complete tasks to help your tree grow!";
+    return "💚 Plň úkoly a pomoz stromu růst!";
   }
 
-  return "🌱 Your tree needs care today.";
+  return "🌱 Tvůj strom dnes potřebuje péči.";
 }

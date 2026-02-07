@@ -10,8 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useStore } from '@/store/useStore';
-import { UserImage } from '@/types';
+import { useStore } from '../../store/useStore';
+import { UserImage } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
 
@@ -36,8 +36,8 @@ export default function GalleryScreen() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
-        'Permission needed',
-        'Please grant permission to access your photos.'
+        'Potřeba oprávnění',
+        'Povolte přístup k fotografiím v nastavení.'
       );
       return;
     }
@@ -55,15 +55,15 @@ export default function GalleryScreen() {
         id: Date.now().toString(),
         uri: asset.uri,
         type: type,
-        name: `Image ${new Date().toLocaleDateString()}`,
+        name: `Obrázek ${new Date().toLocaleDateString('cs-CZ')}`,
         createdAt: new Date().toISOString(),
       };
 
       try {
         await addImage(newImage);
-        Alert.alert('Success', 'Image added to gallery!');
+        Alert.alert('Úspěch', 'Obrázek byl přidán do galerie.');
       } catch (error) {
-        Alert.alert('Error', 'Failed to save image.');
+        Alert.alert('Chyba', 'Nepodařilo se uložit obrázek.');
         console.error(error);
       }
     }
@@ -71,12 +71,12 @@ export default function GalleryScreen() {
 
   const handleDelete = (image: UserImage) => {
     Alert.alert(
-      'Delete Image',
-      'Are you sure you want to delete this image?',
+      'Smazat obrázek',
+      'Opravdu chcete tento obrázek smazat?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Zrušit', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Smazat',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -85,7 +85,7 @@ export default function GalleryScreen() {
                 setSelectedImage(null);
               }
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete image.');
+              Alert.alert('Chyba', 'Nepodařilo se smazat obrázek.');
             }
           },
         },
@@ -94,10 +94,10 @@ export default function GalleryScreen() {
   };
 
   const imageTypes: { type: UserImage['type']; label: string; icon: string }[] = [
-    { type: 'theme', label: 'Theme', icon: 'color-palette' },
-    { type: 'background', label: 'Background', icon: 'image' },
-    { type: 'leaf', label: 'Leaf', icon: 'leaf' },
-    { type: 'reward', label: 'Reward', icon: 'trophy' },
+    { type: 'theme', label: 'Motiv', icon: 'color-palette' },
+    { type: 'background', label: 'Pozadí', icon: 'image' },
+    { type: 'leaf', label: 'List', icon: 'leaf' },
+    { type: 'reward', label: 'Odměna', icon: 'trophy' },
   ];
 
   const filteredImages = userImages.filter((img) => img.type === imageType);
@@ -164,7 +164,7 @@ export default function GalleryScreen() {
         onPress={() => pickImage(imageType)}
       >
         <Ionicons name="add" size={24} color="#fff" />
-        <Text style={styles.addButtonText}>Add {imageTypes.find(t => t.type === imageType)?.label}</Text>
+        <Text style={styles.addButtonText}>Přidat {imageTypes.find(t => t.type === imageType)?.label}</Text>
       </TouchableOpacity>
 
       {/* Image Grid */}
@@ -172,8 +172,8 @@ export default function GalleryScreen() {
         <View style={styles.emptyContainer}>
           <Ionicons name="images-outline" size={64} color={theme.secondary} />
           <Text style={[styles.emptyText, { color: theme.secondary }]}>
-            No {imageTypes.find(t => t.type === imageType)?.label.toLowerCase()} images yet.
-            {'\n'}Add one to customize your tree!
+            Zatím žádné obrázky typu {imageTypes.find(t => t.type === imageType)?.label.toLowerCase()}.
+            {'\n'}Přidej první a přizpůsob svůj strom!
           </Text>
         </View>
       ) : (
@@ -208,23 +208,23 @@ export default function GalleryScreen() {
                     style={[styles.modalButton, { backgroundColor: theme.accent }]}
                     onPress={() => {
                       // TODO: Set as active theme/background
-                      Alert.alert('Success', 'Image set as active!');
+                      Alert.alert('Úspěch', 'Obrázek byl nastaven.');
                       setSelectedImage(null);
                     }}
                   >
-                    <Text style={styles.modalButtonText}>Use This</Text>
+                    <Text style={styles.modalButtonText}>Použít</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalButton, { backgroundColor: '#FF6B35' }]}
                     onPress={() => handleDelete(selectedImage)}
                   >
-                    <Text style={styles.modalButtonText}>Delete</Text>
+                    <Text style={styles.modalButtonText}>Smazat</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalButton, { backgroundColor: theme.secondary }]}
                     onPress={() => setSelectedImage(null)}
                   >
-                    <Text style={styles.modalButtonText}>Close</Text>
+                    <Text style={styles.modalButtonText}>Zavřít</Text>
                   </TouchableOpacity>
                 </View>
               </>
