@@ -3,17 +3,24 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-native",
-    "lib": ["es2015", "es2017", "es2018", "es2019", "es2020", "esnext"],
+    "lib": [
+      "es2015",
+      "es2017",
+      "es2018",
+      "es2019",
+      "es2020",
+      "esnext"
+    ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
     "skipLibCheck": true
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "**/*.tsx"
   ],
   "exclude": [
     "node_modules"
