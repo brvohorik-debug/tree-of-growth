@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { useStore } from '../../store/useStore';
 import Tree from '../../components/Tree';
 import { getMotivationalMessage } from '../../utils/treeUtils';
@@ -20,6 +21,7 @@ export default function TreeScreen() {
 
   useEffect(() => {
     loadData();
+    SplashScreen.hideAsync?.().catch(() => {});
   }, []);
 
   const hasTasksToday = tasks.some((task) => {
@@ -32,7 +34,7 @@ export default function TreeScreen() {
   });
 
   const message = getMotivationalMessage(treeState, hasTasksToday);
-  const isDark = settings.isDarkMode;
+  const isDark = settings?.isDarkMode ?? false;
 
   const theme = {
     background: isDark ? '#1a1a1a' : '#f5f5f5',
