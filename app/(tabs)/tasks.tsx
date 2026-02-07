@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Component, useState } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,49 @@ import {
 import { useStore } from '../../store/useStore';
 import { Task, TaskCategory, TaskPriority } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
+
+class TasksErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError = () => ({ hasError: true });
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={[styles.container, styles.errorContainer]}>
+          <Ionicons name="warning-outline" size={48} color="#FF6B35" />
+          <Text style={styles.errorText}>Nepodařilo se načíst úkoly</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => this.setState({ hasError: false })}
+          >
+            <Text style={styles.retryButtonText}>Zkusit znovu</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function formatTaskDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
+  } catch {
+    return dateStr;
+  }
+}
 
 export default function TasksScreen() {
-  const { tasks, addTask, updateTask, deleteTask, toggleTask, settings } = useStore();
+  const tasks = useStore((s) => s.tasks ?? []);
+  const addTask = useStore((s) => s.addTask);
+  const updateTask = useStore((s) => s.updateTask);
+  const deleteTask = useStore((s) => s.deleteTask);
+  const toggleTask = useStore((s) => s.toggleTask);
+  const settings = useStore((s) => s.settings);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [formData, setFormData] = useState({
@@ -169,19 +208,11 @@ export default function TasksScreen() {
                 {({ low: 'Nízká', medium: 'Střední', high: 'Vysoká' } as Record<TaskPriority, string>)[item.priority] ?? item.priority}
               </Text>
             </View>
-            {item.dueDate && (() => {
-              try {
-                const d = new Date(item.dueDate);
-                if (isNaN(d.getTime())) return null;
-                return (
-                  <Text style={[styles.dateText, { color: theme.secondary }]}>
-                    {format(d, 'd. MMM')}
-                  </Text>
-                );
-              } catch {
-                return null;
-              }
-            })()}
+            {item.dueDate ? (
+              <Text style={[styles.dateText, { color: theme.secondary }]}>
+                {formatTaskDate(item.dueDate)}
+              </Text>
+            ) : null}
           </View>
         </View>
         <TouchableOpacity
@@ -195,11 +226,12 @@ export default function TasksScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <FlatList
-        data={tasks ?? []}
+    <TasksErrorBoundary>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <FlatList
+          data={tasks}
         renderItem={renderTask}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item?.id ?? `task-${index}`}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -351,13 +383,38 @@ export default function TasksScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+      </View>
+    </TasksErrorBoundary>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: '#f5f5f5',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#333',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#4a7c2a',
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   listContent: {
     padding: 16,
